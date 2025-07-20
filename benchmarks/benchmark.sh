@@ -57,6 +57,8 @@ get_mode_num() {
         "Triangle") echo "1" ;;
         "Rectangle") echo "2" ;;
         "Ellipse") echo "3" ;;
+        "Circle") echo "4" ;;
+        "Beziers") echo "6" ;;
     esac
 }
 
@@ -72,8 +74,8 @@ echo "## Benchmark Results - $SHAPES Shapes"
 echo
 echo "### Performance Summary (Wall-clock time in seconds)"
 echo
-echo "| Image        | Triangle (m=1) | Rectangle (m=2) | Ellipse (m=3) |"
-echo "|--------------|----------------|-----------------|---------------|"
+echo "| Image        | Triangle (m=1) | Rectangle (m=2)| Ellipse (m=3)| Circle (m=4) | Beziers (m=6)|"
+echo "|--------------|----------------|----------------|--------------|--------------|--------------|"
 
 for image in "${IMAGES[@]}"; do
     if [ ! -f "examples/$image" ]; then
@@ -83,11 +85,11 @@ for image in "${IMAGES[@]}"; do
     
     printf "| %-12s |" "${image}"
     
-    for mode_name in "Triangle" "Rectangle" "Ellipse"; do
+    for mode_name in "Triangle" "Rectangle" "Ellipse" "Circle" "Beziers"; do
         mode_num=$(get_mode_num "$mode_name")
         output_file="$OUTPUT_DIR/${image%.*}_${mode_name,,}_$SHAPES.png"
         
-        echo -e "${BLUE}Testing: $image with $mode_name mode ($SHAPES shapes)${NC}"
+        #echo -e "${BLUE}Testing: $image with $mode_name mode ($SHAPES shapes)${NC}"
         
         # Run benchmark with time measurement
         start_time=$(date +%s.%N)
@@ -99,7 +101,7 @@ for image in "${IMAGES[@]}"; do
             echo "$image,$mode_name,$wall_time" >> "$RESULTS_FILE"
             
             printf " %-14s |" "${wall_time}s"
-            echo -e "${GREEN}  ✓ ${wall_time}s${NC}"
+            # echo -e "${GREEN}  ✓ ${wall_time}s${NC}"
         else
             printf " %-14s |" "-"
             echo -e "${RED}  ✗ Failed${NC}"

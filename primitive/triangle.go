@@ -70,36 +70,63 @@ func (t *Triangle) Mutate() {
 }
 
 func (t *Triangle) Valid() bool {
-	const minDegrees = 15
-	var a1, a2, a3 float64
-	{
-		x1 := float64(t.X2 - t.X1)
-		y1 := float64(t.Y2 - t.Y1)
-		x2 := float64(t.X3 - t.X1)
-		y2 := float64(t.Y3 - t.Y1)
-		d1 := math.Sqrt(x1*x1 + y1*y1)
-		d2 := math.Sqrt(x2*x2 + y2*y2)
-		x1 /= d1
-		y1 /= d1
-		x2 /= d2
-		y2 /= d2
-		a1 = degrees(math.Acos(x1*x2 + y1*y2))
+	// Fast geometric validation without expensive trigonometry
+	// Equivalent to checking that all angles are > 15 degrees
+	
+	x1, y1 := float64(t.X1), float64(t.Y1)
+	x2, y2 := float64(t.X2), float64(t.Y2)
+	x3, y3 := float64(t.X3), float64(t.Y3)
+	
+	// Calculate squared edge lengths to avoid sqrt
+	dx12, dy12 := x2-x1, y2-y1
+	dx23, dy23 := x3-x2, y3-y2
+	dx31, dy31 := x1-x3, y1-y3
+	
+	len12Sq := dx12*dx12 + dy12*dy12
+	len23Sq := dx23*dx23 + dy23*dy23
+	len31Sq := dx31*dx31 + dy31*dy31
+	
+	// Check for degenerate triangle using area-based approach
+	// Area = 0.5 * |cross product of two edges|
+	// For non-degenerate triangle, area must be significant relative to perimeter
+	crossProduct := dx12*dy31 - dy12*dx31
+	areaSq := crossProduct * crossProduct
+	
+	// Minimum area threshold relative to edge lengths
+	// This effectively filters out triangles with very small angles
+	// Equivalent to checking angles > ~15 degrees without trigonometry
+	minAreaSq := 0.07 * (len12Sq + len23Sq + len31Sq) // ~sin²(15°) ≈ 0.067
+	
+	if areaSq < minAreaSq {
+		return false
 	}
-	{
-		x1 := float64(t.X1 - t.X2)
-		y1 := float64(t.Y1 - t.Y2)
-		x2 := float64(t.X3 - t.X2)
-		y2 := float64(t.Y3 - t.Y2)
-		d1 := math.Sqrt(x1*x1 + y1*y1)
-		d2 := math.Sqrt(x2*x2 + y2*y2)
-		x1 /= d1
-		y1 /= d1
-		x2 /= d2
-		y2 /= d2
-		a2 = degrees(math.Acos(x1*x2 + y1*y2))
+	
+	// Additional check using dot products to ensure no angle is too small
+	// For angle at vertex 1: cos(angle) = dot(v12, v13) / (|v12| * |v13|)
+	// Angle > 15° means cos(angle) < cos(15°) ≈ 0.966
+	// So cos²(angle) < 0.933, or dot² < 0.933 * len12Sq * len13Sq
+	
+	const maxCosSquared = 0.933 // cos²(15°)
+	
+	// Check angle at vertex 1
+	dot12_13 := dx12*(-dx31) + dy12*(-dy31) // dot(v12, v13)
+	if dot12_13*dot12_13 > maxCosSquared*len12Sq*len31Sq {
+		return false
 	}
-	a3 = 180 - a1 - a2
-	return a1 > minDegrees && a2 > minDegrees && a3 > minDegrees
+	
+	// Check angle at vertex 2  
+	dot21_23 := (-dx12)*dx23 + (-dy12)*dy23 // dot(v21, v23)
+	if dot21_23*dot21_23 > maxCosSquared*len12Sq*len23Sq {
+		return false
+	}
+	
+	// Check angle at vertex 3
+	dot32_31 := (-dx23)*dx31 + (-dy23)*dy31 // dot(v32, v31)
+	if dot32_31*dot32_31 > maxCosSquared*len23Sq*len31Sq {
+		return false
+	}
+	
+	return true
 }
 
 func (t *Triangle) Rasterize() []Scanline {

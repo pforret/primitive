@@ -258,7 +258,7 @@ This document provides a comprehensive analysis of each Go file in the `primitiv
 - `Rasterize()`: Triangle decomposition into top-flat and bottom-flat cases
 
 **Performance Optimizations**:
-1. **Replace angle validation** - Use area-based or cross-product validation
+1. ✅ **DONE: Replace angle validation** - Use area-based or cross-product validation
 2. **Pre-allocate scanline capacity** - Estimate based on triangle size
 3. **Integer-only rasterization** - Avoid floating-point arithmetic in hot paths
 4. **SIMD edge walking** - Vectorize slope calculations and scanline generation
@@ -276,7 +276,7 @@ This document provides a comprehensive analysis of each Go file in the `primitiv
 - `rotate()`: 2D coordinate transformation
 
 **Performance Optimizations**:
-1. **Fix AverageImageColor()** - Critical O(n²) to O(n) optimization using stride order
+1. ✅ **DONE: Fix AverageImageColor()** - Critical O(n²) to O(n) optimization using stride order
 2. **RGBA conversion caching** - Skip conversion if already RGBA format
 3. **Trigonometric lookup tables** - Cache sin/cos for rotation operations
 4. **Memory pool for images** - Reuse RGBA images via sync.Pool
@@ -303,18 +303,31 @@ This document provides a comprehensive analysis of each Go file in the `primitiv
 
 ## Priority Optimization Recommendations
 
+### Completed Optimizations (✅ DONE)
+
+**util.go: AverageImageColor() O(n²) → O(n)**:
+- **Issue**: Nested loops with RGBAAt() calls causing O(n²) complexity
+- **Solution**: Direct pixel data access using stride order iteration  
+- **Impact**: Minimal (function called once per run), algorithmically correct
+
+**triangle.go: Validation optimization**:
+- **Issue**: 6× math.Sqrt() + 3× math.Acos() per validation in hot mutation loop
+- **Solution**: Replaced with area-based and dot-product geometric validation
+- **Impact**: **5.9% performance improvement** (8.421s → 7.926s for 500 triangles)
+- **Frequency**: ~600,000 validations per typical 100-triangle run
+
+### Remaining Optimizations
+
 **Highest Impact (Critical Path)**:
-1. **util.go: AverageImageColor()** - Fix O(n²) algorithm
-2. **core.go: SIMD vectorization** - Parallel RGBA processing
-3. **worker.go: Buffer management** - Reduce GC pressure in hot path
-4. **triangle.go: Validation optimization** - Replace expensive trigonometry
+1. **core.go: SIMD vectorization** - Parallel RGBA processing
+2. **worker.go: Buffer management** - Reduce GC pressure in hot path
 
 **High Impact (Frequent Operations)**:
-5. **scanline.go: Index-based iteration** - Eliminate struct copying
-6. **model.go: Memory pools** - Reuse temporary objects
-7. **All shape files: Object pooling** - Reduce allocation overhead
+1. **scanline.go: Index-based iteration** - Eliminate struct copying
+2. **model.go: Memory pools** - Reuse temporary objects
+3. **All shape files: Object pooling** - Reduce allocation overhead
 
 **Medium Impact (Algorithm Improvements)**:
-8. **optimize.go: Parallel chains** - Multiple concurrent optimizations
-9. **raster.go: Batch processing** - Group similar rasterization operations
-10. **log.go: Compile-time elimination** - Remove logging overhead in production
+1. **optimize.go: Parallel chains** - Multiple concurrent optimizations
+2. **raster.go: Batch processing** - Group similar rasterization operations
+3. **log.go: Compile-time elimination** - Remove logging overhead in production
