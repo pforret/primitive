@@ -187,19 +187,34 @@ func uniformRGBA(r image.Rectangle, c color.Color) *image.RGBA {
 
 func AverageImageColor(im image.Image) color.NRGBA {
 	rgba := imageToRGBA(im)
-	size := rgba.Bounds().Size()
-	w, h := size.X, size.Y
-	var r, g, b int
+	bounds := rgba.Bounds()
+	w, h := bounds.Dx(), bounds.Dy()
+	
+	// Direct access to pixel data for O(n) performance
+	pix := rgba.Pix
+	stride := rgba.Stride
+	minY := bounds.Min.Y
+	minX := bounds.Min.X
+	
+	var r, g, b int64
+	
+	// Iterate through pixels in stride order for cache efficiency
 	for y := 0; y < h; y++ {
+		lineStart := (minY+y-bounds.Min.Y)*stride + (minX-bounds.Min.X)*4
 		for x := 0; x < w; x++ {
-			c := rgba.RGBAAt(x, y)
-			r += int(c.R)
-			g += int(c.G)
-			b += int(c.B)
+			i := lineStart + x*4
+			r += int64(pix[i])     // R
+			g += int64(pix[i+1])   // G
+			b += int64(pix[i+2])   // B
+			// Skip alpha channel (pix[i+3])
 		}
 	}
-	r /= w * h
-	g /= w * h
-	b /= w * h
-	return color.NRGBA{uint8(r), uint8(g), uint8(b), 255}
+	
+	totalPixels := int64(w * h)
+	return color.NRGBA{
+		uint8(r / totalPixels),
+		uint8(g / totalPixels),
+		uint8(b / totalPixels),
+		255,
+	}
 }
