@@ -1,4 +1,4 @@
-what # Primitive Twitter Bot
+# Primitive Twitter Bot
 
 A Twitter bot that automatically generates primitive art using geometric shapes and responds to user mentions with custom primitive art generation.
 
