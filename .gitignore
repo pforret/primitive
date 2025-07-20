@@ -1,4 +1,7 @@
+/*.gif
 /*.png
 /*.svg
-/*.gif
-
+/benchmarks/*.png
+/go.mod
+/go.sum
+/primitive-bin
