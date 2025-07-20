@@ -74,8 +74,8 @@ echo "## Benchmark Results - $SHAPES Shapes"
 echo
 echo "### Performance Summary (Wall-clock time in seconds)"
 echo
-echo "| Image        | Triangle (m=1) | Rectangle (m=2)| Ellipse (m=3)| Circle (m=4) | Beziers (m=6)|"
-echo "|--------------|----------------|----------------|--------------|--------------|--------------|"
+echo "| Image        | Triangle (m=1) | Rectangle (m=2)| Ellipse (m=3)  | Circle (m=4)   | Beziers (m=6)  |"
+echo "|--------------|----------------|----------------|----------------|----------------|----------------|"
 
 for image in "${IMAGES[@]}"; do
     if [ ! -f "examples/$image" ]; then
